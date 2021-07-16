@@ -8,67 +8,69 @@ use Illuminate\Support\Facades\Auth;
 
 class SubscriptionController extends Controller
 {
-   public function __construct()
-   {
-       $this->middleware(['auth']);
-       
-   }
+    public function __construct()
+    {
+        $this->middleware(['auth']);
+    }
 
-   public function checkout(Request $request)
-   {
-       if(auth()->user()->subscribed('default'))
-       {
-        return view('subscription.premium');
-       }
-         
-     return view('subscriptions.index',[
-         'intent'=>auth()->user()->createSetupIntent()]
-        );
+    public function index()
+    {
+        if (auth()->user()->subscribed('default'))
+            return redirect()->route('subscriptions.premium');
 
-    } 
-       
-       
-   public function store(Request $request)
-   {
-       $request->user()
-       ->newSubscription('default','price_1JDGUcBOmvZWJe0xm7x3YIvq')
-       ->create($request->token);
-       return redirect()->route('subscription.premium');
-   }
+        return view('subscriptions.index', [
+            'intent' => auth()->user()->createSetupIntent(),
+            'plan' => session('plan')
+        ]);
+    }
 
-   public function premium()
-   {  
-        return view('subscription.premium');
-   }
+    public function store(Request $request)
+    {
+        $plan = session('plan');
 
-   
-   public function account()
-   {
-       $invoices = auth()->user()->invoices();
-       return view('subscription.account',compact('invoices'));
-   }
+        $request->user()
+                ->newSubscription('default', $plan->stripe_id)
+                ->create($request->token);
 
-   public function invoiceDownload($invoiceID)
-   {
-       return Auth::user()->downloadInvoice($invoiceID,[
-           'vendor' => config('app.name'),
-           'product' => 'Assinatura Vip'
-       ]);
-     
-   }
+        return redirect()->route('subscriptions.premium');
+    }
 
-   public function cancel()
-   {
-        Auth::user()->subscription('default')->cancel();
-        return redirect()->route('subscriptions.account');     
-   }
+    public function premium()
+    {
+        return view('subscriptions.premium');
+    }
 
-   public function resume()
-   {
-        Auth::user()->subscription('default')->resume();
-        return redirect()->route('subscriptions.account');     
-   }
-   
+    public function account()
+    {
+        $user = auth()->user();
 
+        $invoices = $user->invoices();
 
+        $subscription = $user->subscription('default');
+
+        return view('subscriptions.account', compact('invoices', 'user', 'subscription'));
+    }
+
+    public function downloadInvoice($invoiceId)
+    {
+        return Auth::user()
+                    ->downloadInvoice($invoiceId, [
+                        'vendor' => config('app.name'),
+                        'product' => 'Assinatura VIP'
+                    ]);
+    }
+
+    public function cancel()
+    {
+        auth()->user()->subscription('default')->cancel();
+
+        return redirect()->route('subscriptions.account');
+    }
+
+    public function resume()
+    {
+        auth()->user()->subscription('default')->resume();
+
+        return redirect()->route('subscriptions.account');
+    }
 }
