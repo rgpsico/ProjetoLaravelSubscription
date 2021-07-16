@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+
 class SubscriptionController extends Controller
 {
     public function __construct()
@@ -45,6 +46,7 @@ class SubscriptionController extends Controller
         $user = auth()->user();
 
         $invoices = $user->invoices();
+  
 
         $subscription = $user->subscription('default');
 

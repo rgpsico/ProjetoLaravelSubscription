@@ -9,6 +9,9 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
+                    <div id="show-errors" style="display: none">
+
+                    </div>
                     <p>Assinando o {{$plan->name}}</p>
                   <form action="{{route('subscriptions.store')}}" method="post" id="form" >
                       @csrf
@@ -41,10 +44,21 @@
    const cardHolderName = document.getElementById('card-holder-name');
    const cardButton = document.getElementById('card-button');
    const clientSecret = cardButton.dataset.secret
+   const showErrors = document.getElementById('show-errors')
 
    form.addEventListener('submit', async (e)  =>{
        e.preventDefault();
+
+       
+       cardButton.classList.add('cursor-not-allowed')
+       cardButton.firstChild.data = 'Validando'
+
+       showErrors.innerText = ''
+       showErrors.style.display = 'none'
       
+
+
+
      const {setupIntent, error} =  await  stripe.confirmCardSetup(
            clientSecret, {
             payment_method:{
@@ -56,10 +70,14 @@
         }
     );
 
-       if (error) {
-           
-           console.log(error)
-           return;
+       if (error) {           
+         if(error.type == 'validation_error')
+
+         showErrors.style.display = 'block' 
+         showErrors.innerText = (error.type == 'validation_error' ? error.message :  'Dados invalidos , verifique novamente')
+         cardButton.classList.remove('cursor-not-allowed')
+         return;
+
        }
 
        let token = document.createElement('input')
@@ -69,6 +87,7 @@
        form.appendChild(token)
       
        form.submit();
+       
 
 
    })
